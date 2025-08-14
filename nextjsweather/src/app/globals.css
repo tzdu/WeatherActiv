@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@import "@here/maps-api-for-javascript/bin/mapsjs-ui.css";
 :root {
   --background: #ffffff;
   --foreground: #171717;

@@ -1,7 +1,8 @@
 // File: app/page.tsx
+
 "use client";
 import { useMemo, useState } from "react";
-
+import InteractiveMap from "./Component/interactiveMap";
 type ConditionKey = "rain" | "wind" | "temp" | "uv" | "humidity";
 
 type Forecast = {
@@ -203,6 +204,21 @@ export default function Page() {
           </div>
         </aside>
       </section>
+{/* Site map */}
+<div className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+  <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+    <h2 className="text-base font-semibold">Site map</h2>
+    <span className="text-xs text-neutral-600">{location}</span>
+  </div>
+  <div className="h-[420px]">
+    <InteractiveMap
+      apikey={process.env.NEXT_PUBLIC_HERE_API_KEY!}
+      center={{ lat: -37.8136, lng: 144.9631 }}
+      zoom={11}
+      className="h-full w-full"
+    />
+  </div>
+</div>
 
       {/* Footer note / mockup image slot */}
       <section className="mt-8 rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4">
