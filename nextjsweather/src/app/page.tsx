@@ -2,7 +2,11 @@
 
 "use client";
 import { useMemo, useState } from "react";
-import InteractiveMap from "./Component/interactiveMap";
+// import InteractiveMap from "./Component/interactiveMap";
+import dynamic from 'next/dynamic';
+
+const InteractiveMap = dynamic(() => import('./Component/interactiveMap'), { ssr: false });
+
 type ConditionKey = "rain" | "wind" | "temp" | "uv" | "humidity";
 
 type Forecast = {
@@ -24,7 +28,7 @@ type Task = {
 
 // --- Sample demo data (replace with API later) ------------------
 const demoForecast: Forecast[] = [
-  { date: "2025-08-13", rain_mm: 0.2, wind_kmh: 18, temp_max: 16, uv_index: 2, humidity: 58 },
+  { date: "2025-08-13", rain_mm: 0.2, wind_kmh: 18, temp_max: 26, uv_index: 2, humidity: 58 },
   { date: "2025-08-14", rain_mm: 5.8, wind_kmh: 32, temp_max: 14, uv_index: 3, humidity: 71 },
   { date: "2025-08-15", rain_mm: 1.0, wind_kmh: 22, temp_max: 17, uv_index: 4, humidity: 60 },
   { date: "2025-08-16", rain_mm: 9.6, wind_kmh: 41, temp_max: 12, uv_index: 1, humidity: 76 },
@@ -71,25 +75,19 @@ export default function Page() {
     });
   }, [riskByDate]);
 
+
+
+
+
   return (
-    <main className="mx-auto max-w-7xl p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="size-9 rounded-xl bg-blue-600" />
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">WeatherActiV</h1>
-          <span className="hidden rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 md:inline">Beta</span>
-        </div>
-        <div className="flex w-full items-center gap-2 md:w-auto">
-          <input
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-            placeholder="Search location"
-            className="w-full rounded-xl border border-neutral-300 bg-white/70 px-3 py-2 shadow-sm outline-none focus:ring-2 focus:ring-blue-500 md:w-80"
-          />
-          <button className="rounded-xl bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800">Set</button>
-        </div>
-      </header>
+    <main className="flex flex-col items-center justify-center min-h-screen">
+      <div>
+<h1 className="text-3xl font-bold text-center">WeatherActiV</h1>
+        <h1 className="mb-6 text-3xl font-bold">WeatherActiV Dashboard</h1>
+          <p className="text-center font-bold text-green-500">
+ chicken jockey
+</p>
+      </div>
 
       {/* Top summary cards */}
       <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -109,9 +107,9 @@ export default function Page() {
       </section>
 
       {/* Main layout */}
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <section className="flex justify-center">
         {/* Left: Risk timeline & forecast table */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm mx-auto">
           <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-base font-semibold">7‑day risk timeline</h2>
