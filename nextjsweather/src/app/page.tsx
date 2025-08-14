@@ -132,7 +132,7 @@ export default function Page() {
                   <th className="px-2">Risk</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="text-neutral-800">
                 {demoForecast.map((f) => (
                   <tr key={f.date} className="rounded-xl bg-neutral-50">
                     <td className="px-2 py-2 font-medium">{formatDate(f.date)}</td>
@@ -146,8 +146,27 @@ export default function Page() {
                 ))}
               </tbody>
             </table>
+                 {/* Site map inside forecast details */}
+  <div className="mt-0 rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+    <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+      <h2 className="text-base font-semibold">Site map</h2>
+      <span className="text-xs text-neutral-600">{location}</span>
+    </div>
+    <div className="h-[420px]">
+      <InteractiveMap
+        apikey={process.env.NEXT_PUBLIC_HERE_API_KEY!}
+        center={{ lat: -37.8136, lng: 144.9631 }}
+        zoom={11}
+        className="h-full w-full"
+      />
+    </div>
+</div>
           </div>
         </div>
+
+      
+
+
 
         {/* Right: Thresholds & Alerts */}
         <aside className="flex flex-col gap-6">
@@ -202,21 +221,7 @@ export default function Page() {
           </div>
         </aside>
       </section>
-{/* Site map */}
-<div className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
-  <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-    <h2 className="text-base font-semibold">Site map</h2>
-    <span className="text-xs text-neutral-600">{location}</span>
-  </div>
-  <div className="h-[420px]">
-    <InteractiveMap
-      apikey={process.env.NEXT_PUBLIC_HERE_API_KEY!}
-      center={{ lat: -37.8136, lng: 144.9631 }}
-      zoom={11}
-      className="h-full w-full"
-    />
-  </div>
-</div>
+
 
       {/* Footer note / mockup image slot */}
       <section className="mt-8 rounded-2xl border border-dashed border-neutral-300 bg-white/60 p-4">
