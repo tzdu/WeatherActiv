@@ -354,4 +354,28 @@ def main():
         print(f"Error parsing data: {parsed_data['error']}")
 
 if __name__ == "__main__":
-    main()
+    from ftplib import FTP
+    
+    # Download fresh data
+    ftp = FTP('ftp.bom.gov.au')
+    ftp.login()
+    ftp.cwd('/anon/gen/fwo')
+    
+    filename = 'IDV60920.xml'
+    with open(filename, 'wb') as f:
+        ftp.retrbinary(f'RETR {filename}', f.write)
+    ftp.quit()
+    print(f"Downloaded {filename}")
+    
+    # Parse the data
+    parser = BoMWeatherParser()
+    data = parser.parse_file(filename)
+    
+    # Get database-ready data
+    stations = parser.get_stations_for_db()
+    observations = parser.get_observations_for_db()
+    
+    print(f"Got {len(stations)} stations and {len(observations)} observations")
+    print("First observation:", observations[0])
+
+
