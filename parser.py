@@ -302,17 +302,17 @@ class BoMWeatherParser:
         if output_file:
             with open(output_file, 'w') as f:
                 json.dump(db_ready_data, f, indent=2, default=str)
-            return None # To not display the entire database in the output.
+            return None # To not display the entire database in the output
         
         return db_ready_data
 
 if __name__ == "__main__":
     from ftplib import FTP
     
-    print(" Starting Weather Data Pipeline...")
+    print(" Starting Weather Data Pipeline")
     
     # For downloading fresh data
-    print(" Downloading latest weather data...")
+    print(" Downloading latest weather data")
     try:
         ftp = FTP('ftp.bom.gov.au')
         ftp.login()
@@ -328,7 +328,7 @@ if __name__ == "__main__":
         exit()
     
     # Parse the data (single instance)
-    print(" Parsing weather data...")
+    print(" Parsing weather data")
     parser = BoMWeatherParser()
     parsed_data = parser.parse_file(filename)
     
