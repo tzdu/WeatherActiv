@@ -101,6 +101,7 @@ class BoMWeatherParser:
             observation_data = {
                 'bom_id': station.get('bom-id'),  # Foreign key to stations
                 'wmo_id': station.get('wmo-id'),
+                'station_name': station.get('stn-name'),
                 'observation_time_utc': self._parse_datetime(period.get('time-utc')),
                 'observation_time_local': self._parse_datetime(period.get('time-local')),
                 'wind_source': period.get('wind-src')
@@ -214,7 +215,7 @@ class BoMWeatherParser:
         except ValueError:
             return None
     
-    # Database-specific helper methods
+    # Database specific helper methods
     def get_metadata_for_db(self) -> Dict[str, Any]:
         """Get metadata formatted for database insertion"""
         return self.parsed_data['metadata']
@@ -301,81 +302,95 @@ class BoMWeatherParser:
         if output_file:
             with open(output_file, 'w') as f:
                 json.dump(db_ready_data, f, indent=2, default=str)
+            return None # To not display the entire database in the output.
         
         return db_ready_data
-
-# Example usage for database integration
-def main():
-    """Example showing database-ready usage"""
-    
-    # Parse the data
-    parser = BoMWeatherParser()
-    filename = 'IDV60920.xml'  # Your downloaded file
-    
-    # Parse and get structured data
-    parsed_data = parser.parse_file(filename)
-    
-    if 'error' not in parsed_data:
-        print(f"Successfully parsed weather data")
-        print(f"Found {len(parser.get_stations_for_db())} stations")
-        print(f"Found {len(parser.get_observations_for_db())} observations")
-        
-        # Get data ready for database insertion
-        metadata = parser.get_metadata_for_db()
-        stations = parser.get_stations_for_db()
-        observations = parser.get_observations_for_db()
-        
-        print("\nSample station data:")
-        if stations:
-            print(json.dumps(stations[0], indent=2, default=str))
-        
-        print("\nSample observation data:")
-        if observations:
-            print(json.dumps(observations[0], indent=2, default=str))
-        
-        # Prepare for MySQL INSERT
-        station_columns, station_rows = parser.prepare_for_mysql_insert('stations')
-        obs_columns, obs_rows = parser.prepare_for_mysql_insert('observations')
-        
-        print(f"\nStation columns: {station_columns}")
-        print(f"First station row: {station_rows[0] if station_rows else 'None'}")
-        
-        # Export everything for database
-        db_data = parser.export_for_database('weather_data_for_db.json')
-        print("\nData exported to weather_data_for_db.json")
-        
-        # Temperature summary (useful for APIs/dashboards)
-        temp_summary = parser.get_temperature_summary()
-        print(f"\nTemperature summary for {len(temp_summary)} stations:")
-        for temp in temp_summary[:3]:  # Show first 3
-            print(f"  {temp['station_name']}: {temp['temperature']}°C")
-    
-    else:
-        print(f"Error parsing data: {parsed_data['error']}")
 
 if __name__ == "__main__":
     from ftplib import FTP
     
-    # Download fresh data
-    ftp = FTP('ftp.bom.gov.au')
-    ftp.login()
-    ftp.cwd('/anon/gen/fwo')
+    print(" Starting Weather Data Pipeline...")
     
-    filename = 'IDV60920.xml'
-    with open(filename, 'wb') as f:
-        ftp.retrbinary(f'RETR {filename}', f.write)
-    ftp.quit()
-    print(f"Downloaded {filename}")
+    # For downloading fresh data
+    print(" Downloading latest weather data...")
+    try:
+        ftp = FTP('ftp.bom.gov.au')
+        ftp.login()
+        ftp.cwd('/anon/gen/fwo')
+        
+        filename = 'IDV60920.xml'
+        with open(filename, 'wb') as f:
+            ftp.retrbinary(f'RETR {filename}', f.write)
+        ftp.quit()
+        print(f"✅ Downloaded {filename}")
+    except Exception as e:
+        print(f"❌ Download failed: {e}")
+        exit()
     
-    # Parse the data
+    # Parse the data (single instance)
+    print(" Parsing weather data...")
     parser = BoMWeatherParser()
-    data = parser.parse_file(filename)
+    parsed_data = parser.parse_file(filename)
     
-    # Get database-ready data
+    if 'error' in parsed_data:
+        print(f"❌ Parsing failed: {parsed_data['error']}")
+        exit()
+    
+    # Get database ready data
+    metadata = parser.get_metadata_for_db()
     stations = parser.get_stations_for_db()
     observations = parser.get_observations_for_db()
     
-    print(f"Got {len(stations)} stations and {len(observations)} observations")
-    print("First observation:", observations[0])
+    print(f" Successfully parsed {len(stations)} stations and {len(observations)} observations")
+    
+    # Show summary
+    print("\n" + "="*50)
+    print(" WEATHER DATA SUMMARY")
+    print("="*50)
+    
+    print(f" Data Source: {metadata.get('sender', 'BoM')}")
+    print(f" Report Time: {metadata.get('issue_time_local', 'N/A')}")
+    print(f" Report ID: {metadata.get('report_id', 'N/A')}")
+    
+    print(f"\n TEMPERATURE OVERVIEW:")
+    temp_summary = parser.get_temperature_summary()
+    for i, temp in enumerate(temp_summary[:5]):  # Show first 5 stations
+        time_str = temp['observation_time'].strftime('%H:%M') if temp['observation_time'] else 'N/A'
+        print(f"  {i+1}. {temp['station_name']}: {temp['temperature']}°C at {time_str}")
+    
+    if len(temp_summary) > 5:
+        print(f"  ... and {len(temp_summary) - 5} more stations")
+    
+    # Database preparation check
+    print(f"\n DATABASE READY:")
+    station_columns, station_rows = parser.prepare_for_mysql_insert('stations')
+    obs_columns, obs_rows = parser.prepare_for_mysql_insert('observations')
+    
+    print(f" Station table: {len(station_columns)} columns, {len(station_rows)} rows")
+    print(f" Observations table: {len(obs_columns)} columns, {len(obs_rows)} rows")
+    
+    # Export backup
+    backup_file = 'weather_backup.json'
+    parser.export_for_database(backup_file)
+    print(f" Backup saved to: {backup_file}")
+    
+    print("\n Pipeline completed successfully!")
+    print("\n Data now ready for MySQL RDS insertion!")
+    
+    # Sample for verification
+    print(f"\n SAMPLE STATION DATA:")
+    if stations:
+        sample_station = stations[0]
+        print(f"  Name: {sample_station['station_name']}")
+        print(f"  ID: {sample_station['bom_id']}")
+        print(f"  Location: {sample_station['latitude']:.2f}, {sample_station['longitude']:.2f}")
+    
+    print(f"\n SAMPLE OBSERVATION DATA:")
+    if observations:
+        sample_obs = observations[0]
+        print(f"  Station: {sample_obs['bom_id']}")
+        print(f"  Temperature: {sample_obs.get('temperature_celsius', 'N/A')}°C")
+        print(f"  Wind: {sample_obs.get('wind_direction', 'N/A')} at {sample_obs.get('wind_speed_kmh', 0)} km/h")
+        print(f"  Humidity: {sample_obs.get('relative_humidity_percent', 'N/A')}%")
 
 
