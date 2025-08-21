@@ -378,19 +378,24 @@ if __name__ == "__main__":
     print("\n Data now ready for MySQL RDS insertion!")
     
     # Sample for verification
-    print(f"\n SAMPLE STATION DATA:")
+    print(f"\n STATION DATA:")
     if stations:
         sample_station = stations[0]
         print(f"  Name: {sample_station['station_name']}")
         print(f"  ID: {sample_station['bom_id']}")
         print(f"  Location: {sample_station['latitude']:.2f}, {sample_station['longitude']:.2f}")
     
-    print(f"\n SAMPLE OBSERVATION DATA:")
+    print(f"\n OBSERVATION DATA:")
     if observations:
         sample_obs = observations[0]
         print(f"  Station: {sample_obs['bom_id']}")
+        print(f"  Station name: {sample_obs['station_name']}")
         print(f"  Temperature: {sample_obs.get('temperature_celsius', 'N/A')}°C")
         print(f"  Wind: {sample_obs.get('wind_direction', 'N/A')} at {sample_obs.get('wind_speed_kmh', 0)} km/h")
         print(f"  Humidity: {sample_obs.get('relative_humidity_percent', 'N/A')}%")
 
 
+# Example usage if we want to inspect the dictionary for the station and observation data
+parser.parsed_data['stations'][0]  # First station 
+parser.parsed_data['stations'][1]  # Second station
+parser.parsed_data['observations'][0]  # First observation
