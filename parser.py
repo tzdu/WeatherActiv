@@ -2,6 +2,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 import json
+import time
+from datetime import datetime, timedelta
+from ftplib import FTP
 
 class BoMWeatherParser:
     """Parser for Bureau of Meteorology XML weather data optimized for database storage"""
@@ -306,14 +309,14 @@ class BoMWeatherParser:
         
         return db_ready_data
 
-if __name__ == "__main__":
-    from ftplib import FTP
+def run_weather_pipeline():
+    """Run a single weather data extraction and parsing cycle"""
+    print(f"\n🔄 Starting pipeline run at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    print(" Starting Weather Data Pipeline")
-    
-    # For downloading fresh data
-    print(" Downloading latest weather data")
+    # Download fresh data
+    print("📥 Downloading latest weather data")
     try:
+        from ftplib import FTP
         ftp = FTP('ftp.bom.gov.au')
         ftp.login()
         ftp.cwd('/anon/gen/fwo')
@@ -325,77 +328,160 @@ if __name__ == "__main__":
         print(f"✅ Downloaded {filename}")
     except Exception as e:
         print(f"❌ Download failed: {e}")
-        exit()
+        return None  # Return None if failed
     
-    # Parse the data (single instance)
+    # Parse the data
     print(" Parsing weather data")
     parser = BoMWeatherParser()
     parsed_data = parser.parse_file(filename)
     
     if 'error' in parsed_data:
         print(f"❌ Parsing failed: {parsed_data['error']}")
-        exit()
+        return None
     
     # Get database ready data
     metadata = parser.get_metadata_for_db()
     stations = parser.get_stations_for_db()
     observations = parser.get_observations_for_db()
     
-    print(f" Successfully parsed {len(stations)} stations and {len(observations)} observations")
+    print(f"✅ Successfully parsed {len(stations)} stations and {len(observations)} observations")
     
-    # Show summary
-    print("\n" + "="*50)
-    print(" WEATHER DATA SUMMARY")
-    print("="*50)
-    
-    print(f" Data Source: {metadata.get('sender', 'BoM')}")
-    print(f" Report Time: {metadata.get('issue_time_local', 'N/A')}")
-    print(f" Report ID: {metadata.get('report_id', 'N/A')}")
-    
-    print(f"\n TEMPERATURE OVERVIEW:")
-    temp_summary = parser.get_temperature_summary()
-    for i, temp in enumerate(temp_summary[:5]):  # Show first 5 stations
-        time_str = temp['observation_time'].strftime('%H:%M') if temp['observation_time'] else 'N/A'
-        print(f"  {i+1}. {temp['station_name']}: {temp['temperature']}°C at {time_str}")
-    
-    if len(temp_summary) > 5:
-        print(f"  ... and {len(temp_summary) - 5} more stations")
-    
-    # Database preparation check
-    print(f"\n DATABASE READY:")
-    station_columns, station_rows = parser.prepare_for_mysql_insert('stations')
-    obs_columns, obs_rows = parser.prepare_for_mysql_insert('observations')
-    
-    print(f" Station table: {len(station_columns)} columns, {len(station_rows)} rows")
-    print(f" Observations table: {len(obs_columns)} columns, {len(obs_rows)} rows")
-    
-    # Export backup
-    backup_file = 'weather_backup.json'
+    # Export backup with timestamp
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_file = f'weather_backup_{timestamp}.json'
     parser.export_for_database(backup_file)
     print(f" Backup saved to: {backup_file}")
     
-    print("\n Pipeline completed successfully!")
-    print("\n Data now ready for MySQL RDS insertion!")
-    
-    # Sample for verification
-    print(f"\n STATION DATA:")
-    if stations:
-        sample_station = stations[0]
-        print(f"  Name: {sample_station['station_name']}")
-        print(f"  ID: {sample_station['bom_id']}")
-        print(f"  Location: {sample_station['latitude']:.2f}, {sample_station['longitude']:.2f}")
-    
-    print(f"\n OBSERVATION DATA:")
-    if observations:
-        sample_obs = observations[0]
-        print(f"  Station: {sample_obs['bom_id']}")
-        print(f"  Station name: {sample_obs['station_name']}")
-        print(f"  Temperature: {sample_obs.get('temperature_celsius', 'N/A')}°C")
-        print(f"  Wind: {sample_obs.get('wind_direction', 'N/A')} at {sample_obs.get('wind_speed_kmh', 0)} km/h")
-        print(f"  Humidity: {sample_obs.get('relative_humidity_percent', 'N/A')}%")
+    print(f" Pipeline cycle completed at {datetime.now().strftime('%H:%M:%S')}")
+    return parser 
 
-
-# Example usage if we want to inspect the dictionary for the station and observation data
-parser.parsed_data['stations'][0]  # First station 
-parser.parsed_data['stations'][1]  # Second station
-parser.parsed_data['observations'][0]  # First observation
+if __name__ == "__main__":
+    import sys
+    
+    # Check if user wants continuous mode or single run
+    if len(sys.argv) > 1 and sys.argv[1] == 'loop':
+        # Continous hourly mode
+        print(" Starting Continuous Hourly Weather Data Pipeline")
+        print("=" * 50)
+        
+        # Run once immediately and store parser
+        print(" Running initial data extraction...")
+        parser = run_weather_pipeline()
+        
+        if parser:
+            print("\n Latest data available via 'parser' variable:")
+            print("  - parser.parsed_data['stations'][0]")
+            print("  - parser.parsed_data['observations'][0]")
+        
+        try:
+            while True:
+                # Calculate seconds until next hour
+                now = datetime.now()
+                next_hour = (now + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+                sleep_seconds = (next_hour - now).total_seconds()
+                
+                print(f" Sleeping until {next_hour.strftime('%H:%M:%S')} ({sleep_seconds/60:.1f} minutes)")
+                time.sleep(sleep_seconds)
+                
+                # Run the pipeline and update parser
+                parser = run_weather_pipeline()
+                
+        except KeyboardInterrupt:
+            print("\n Pipeline stopped by user")
+            
+    else:
+        # Single run mode
+        print(" Starting Single Weather Data Pipeline Run")
+        print(" Use 'python your_script.py loop' for continuous hourly mode")
+        print("=" * 50)
+        
+        # Your original detailed output code
+        from ftplib import FTP
+        print(" Downloading latest weather data")
+        
+        try:
+            ftp = FTP('ftp.bom.gov.au')
+            ftp.login()
+            ftp.cwd('/anon/gen/fwo')
+            
+            filename = 'IDV60920.xml'
+            with open(filename, 'wb') as f:
+                ftp.retrbinary(f'RETR {filename}', f.write)
+            ftp.quit()
+            print(f"✅ Downloaded {filename}")
+        except Exception as e:
+            print(f"❌ Download failed: {e}")
+            exit()
+        
+        # Parse the data (single instance)
+        print(" Parsing weather data")
+        parser = BoMWeatherParser()
+        parsed_data = parser.parse_file(filename)
+        
+        if 'error' in parsed_data:
+            print(f"❌ Parsing failed: {parsed_data['error']}")
+            exit()
+        
+        # Get database ready data
+        metadata = parser.get_metadata_for_db()
+        stations = parser.get_stations_for_db()
+        observations = parser.get_observations_for_db()
+        
+        print(f"✅ Successfully parsed {len(stations)} stations and {len(observations)} observations")
+        
+        # Show summary
+        print("\n" + "="*50)
+        print(" WEATHER DATA SUMMARY")
+        print("="*50)
+        
+        print(f" Data Source: {metadata.get('sender', 'BoM')}")
+        print(f" Report Time: {metadata.get('issue_time_local', 'N/A')}")
+        print(f" Report ID: {metadata.get('report_id', 'N/A')}")
+        
+        print(f"\n TEMPERATURE OVERVIEW:")
+        temp_summary = parser.get_temperature_summary()
+        for i, temp in enumerate(temp_summary[:5]):  # Show first 5 stations
+            time_str = temp['observation_time'].strftime('%H:%M') if temp['observation_time'] else 'N/A'
+            print(f"  {i+1}. {temp['station_name']}: {temp['temperature']}°C at {time_str}")
+        
+        if len(temp_summary) > 5:
+            print(f"  ... and {len(temp_summary) - 5} more stations")
+        
+        # Database preparation check
+        print(f"\n DATABASE READY:")
+        station_columns, station_rows = parser.prepare_for_mysql_insert('stations')
+        obs_columns, obs_rows = parser.prepare_for_mysql_insert('observations')
+        
+        print(f"  Station table: {len(station_columns)} columns, {len(station_rows)} rows")
+        print(f"  Observations table: {len(obs_columns)} columns, {len(obs_rows)} rows")
+        
+        # Export backup
+        backup_file = 'weather_backup.json'
+        parser.export_for_database(backup_file)
+        print(f" Backup saved to: {backup_file}")
+        
+        print("\n  Pipeline completed successfully")
+        print("\n Your data is now ready for MySQL RDS insertion!")
+        
+        # Sample for verification
+        print(f"\n SAMPLE STATION DATA:")
+        if stations:
+            sample_station = stations[0]
+            print(f"  Name: {sample_station['station_name']}")
+            print(f"  ID: {sample_station['bom_id']}")
+            print(f"  Location: {sample_station['latitude']:.2f}, {sample_station['longitude']:.2f}")
+        
+        print(f"\n SAMPLE OBSERVATION DATA:")
+        if observations:
+            sample_obs = observations[0]
+            print(f"  Station: {sample_obs['bom_id']}")
+            print(f"  Station name: {sample_obs['station_name']}")
+            print(f"  Temperature: {sample_obs.get('temperature_celsius', 'N/A')}°C")
+            print(f"  Wind: {sample_obs.get('wind_direction', 'N/A')} at {sample_obs.get('wind_speed_kmh', 0)} km/h")
+            print(f"  Humidity: {sample_obs.get('relative_humidity_percent', 'N/A')}%")
+        
+        print(f"\n INSPECTION COMMANDS:")
+        print(f"  parser.parsed_data['stations'][0]  # First station")
+        print(f"  parser.parsed_data['stations'][1]  # Second station")  
+        print(f"  parser.parsed_data['observations'][0]  # First observation")
+        print(f"\n The 'parser' variable is available for inspection!")
