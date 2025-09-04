@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd nextjsweather && npm run build",
+  "outputDirectory": "nextjsweather/.next",
+  "installCommand": "cd nextjsweather && npm install",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}

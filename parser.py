@@ -174,6 +174,9 @@ class BoMWeatherParser:
                 if element_type in ['wind_dir', 'cloud', 'maximum_gust_dir']:
                     # String values
                     measurements[field_name] = element.text
+                elif element_type == 'wind_dir_deg':
+                    # Wind direction degrees can be decimal
+                    measurements[field_name] = self._get_float(element.text)
                 else:
                     # Numeric values
                     measurements[field_name] = self._get_float(element.text)
@@ -197,6 +200,15 @@ class BoMWeatherParser:
             return None
         try:
             return float(value)
+        except (ValueError, TypeError):
+            return None
+    
+    def _get_int(self, value: Any) -> Optional[int]:
+        """Convert value to int, return None if conversion fails"""
+        if value is None:
+            return None
+        try:
+            return int(float(value))  # Convert to float first to handle "339.0" format
         except (ValueError, TypeError):
             return None
     

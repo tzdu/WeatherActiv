@@ -1,0 +1,18 @@
+# Weather Data Pipeline Requirements
+
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
+
+# Supabase integration
+supabase>=2.0.0
+
+# Scheduling
+schedule>=1.2.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Optional: For enhanced logging and monitoring
+rich>=13.0.0
