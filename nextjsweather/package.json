@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup": "node setup-env.js",
+    "dev:setup": "npm run setup && npm run dev"
   },
   "dependencies": {
     "@here/maps-api-for-javascript": "^1.67.0",
