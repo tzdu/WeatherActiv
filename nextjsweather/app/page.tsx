@@ -6,7 +6,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-4">
-          Victoria Weather
+          Weatheractiv
         </h1>
         <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
           Choose your preferred view
@@ -37,7 +37,7 @@ export default function Home() {
         </div>
         
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-8">
-          Real-time weather data from Bureau of Meteorology
+          Weather stations in construction across Victoria
         </p>
       </div>
     </div>

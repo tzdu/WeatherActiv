@@ -263,10 +263,10 @@ export default function WeatherDashboard() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Weather Project Dashboard
+              Weatheractiv Dashboard
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Manage weather monitoring projects and analyze historical data
+              Weather stations in construction across Victoria
             </p>
             {lastUpdated && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

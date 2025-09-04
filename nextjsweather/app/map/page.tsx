@@ -84,10 +84,10 @@ export default function MapPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-              Victoria Weather Map
+              Weatheractiv Map
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Interactive weather stations across Victoria
+              Weather stations in construction across Victoria
             </p>
             {lastUpdated && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

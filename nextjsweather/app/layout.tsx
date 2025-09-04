@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Weather Dashboard - BoM Data',
-  description: 'Real-time weather data from Bureau of Meteorology Australia',
+  title: 'Weatheractiv',
+  description: 'Weather stations in construction across Victoria',
 }
 
 export default function RootLayout({
