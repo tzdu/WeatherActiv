@@ -50,6 +50,13 @@ export default function Page() {
   const [rainMax, setRainMax] = useState(2); // mm
   const [windMax, setWindMax] = useState(35); // km/h
   const [tempMin, setTempMin] = useState(10); // °C
+  
+  // Get API key safely
+  const apiKey = process.env.NEXT_PUBLIC_HERE_API_KEY || '';
+  
+  // Debug: Log API key status (remove in production)
+  console.log('API Key status:', apiKey ? 'Present' : 'Missing');
+  console.log('API Key value:', apiKey ? `${apiKey.substring(0, 8)}...` : 'undefined');
 
   const dates = useMemo(() => demoForecast.map(f => f.date), []);
 
@@ -153,12 +160,24 @@ export default function Page() {
       <span className="text-xs text-neutral-600">{location}</span>
     </div>
     <div className="h-[420px]">
-      <InteractiveMap
-        apikey={process.env.NEXT_PUBLIC_HERE_API_KEY!}
-        center={{ lat: -37.8136, lng: 144.9631 }}
-        zoom={11}
-        className="h-full w-full"
-      />
+      {apiKey ? (
+        <InteractiveMap
+          apikey={apiKey}
+          center={{ lat: -37.8136, lng: 144.9631 }}
+          zoom={11}
+          className="h-full w-full"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-600">
+          <div className="text-center">
+            <p className="text-sm font-medium">Map unavailable</p>
+            <p className="text-xs">HERE API key not configured</p>
+            <p className="text-xs mt-1">
+              Add <code className="bg-gray-200 px-1 rounded">NEXT_PUBLIC_HERE_API_KEY</code> to your .env.local file
+            </p>
+          </div>
+        </div>
+      )}
     </div>
 </div>
           </div>
@@ -326,7 +345,7 @@ function riskLabel(risk?: number) {
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  return d.toLocaleDateString('en-US', { weekday: "short", month: "short", day: "numeric" });
 }
 
 function pretty(k: ConditionKey) {

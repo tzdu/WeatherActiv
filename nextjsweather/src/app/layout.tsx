@@ -9,7 +9,7 @@ import './globals.css';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-neutral-50 text-neutral-900 antialiased selection:bg-blue-200">
+      <body className="min-h-screen antialiased selection:bg-blue-200" suppressHydrationWarning={true}>
         {children}
       </body>
     </html>
