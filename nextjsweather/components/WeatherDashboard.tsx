@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { CurrentWeather, WeatherObservation, WeatherStation } from '@/lib/supabase'
 import WeatherCard from './WeatherCard'
 import TemperatureChart from './TemperatureChart'
-import { RefreshCw, MapPin, Thermometer, Wind, Droplets, Calendar, Plus, Settings, BarChart3, Map } from 'lucide-react'
+import MonthlyWeatherHeatmap from './MonthlyWeatherHeatmap'
+import { RefreshCw, MapPin, Thermometer, Wind, Droplets, Calendar, Plus, Settings, BarChart3, Map, History, Activity } from 'lucide-react'
 import Link from 'next/link'
 
 interface Project {
@@ -42,6 +43,14 @@ export default function WeatherDashboard() {
       stationId: '086282',
       description: 'Aviation weather tracking',
       createdAt: new Date('2025-01-15')
+    },
+    {
+      id: '3',
+      name: 'Historical Weather Analysis',
+      location: 'ABERFELDY',
+      stationId: '85000',
+      description: 'Historical weather data analysis',
+      createdAt: new Date('2025-01-20')
     }
   ])
   const [selectedProject, setSelectedProject] = useState<string>('1')
@@ -52,6 +61,7 @@ export default function WeatherDashboard() {
     stationId: '',
     description: ''
   })
+  const [viewMode, setViewMode] = useState<'current' | 'historical'>('current')
 
   // Fetch current weather data from Supabase
   const fetchWeatherData = async () => {
@@ -268,6 +278,12 @@ export default function WeatherDashboard() {
             <p className="text-gray-600 dark:text-gray-300">
               Weather stations in construction across Victoria
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <div className={`w-3 h-3 rounded-full ${viewMode === 'current' ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                {viewMode === 'current' ? 'Current Weather Data' : 'Historical Weather Analysis'}
+              </span>
+            </div>
             {lastUpdated && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Last updated: {lastUpdated.toLocaleTimeString()}
@@ -283,6 +299,17 @@ export default function WeatherDashboard() {
               <Map className="h-4 w-4" />
               Map View
             </Link>
+            <button
+              onClick={() => setViewMode(viewMode === 'current' ? 'historical' : 'current')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                viewMode === 'historical'
+                  ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                  : 'bg-gray-600 hover:bg-gray-700 text-white'
+              }`}
+            >
+              {viewMode === 'current' ? <History className="h-4 w-4" /> : <Activity className="h-4 w-4" />}
+              {viewMode === 'current' ? 'Historical View' : 'Current View'}
+            </button>
             <button
               onClick={() => setShowNewProject(true)}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
@@ -519,8 +546,19 @@ export default function WeatherDashboard() {
           </div>
         )}
 
-        {/* Calendar Heatmap */}
-        {selectedProjectData && <CalendarHeatmap />}
+        {/* Weather Data Display */}
+        {selectedProjectData && (
+          <>
+            {viewMode === 'current' ? (
+              <CalendarHeatmap />
+            ) : (
+              <MonthlyWeatherHeatmap 
+                stationId={selectedProjectData.stationId}
+                stationName={selectedProjectData.name}
+              />
+            )}
+          </>
+        )}
 
         {/* Historical Chart */}
         {selectedStationData && historicalData.length > 0 && (

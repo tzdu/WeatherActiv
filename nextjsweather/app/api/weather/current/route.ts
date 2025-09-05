@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -8,19 +11,34 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function GET() {
   try {
+    const timestamp = new Date().toISOString()
+    console.log('=== CURRENT WEATHER API CALLED ===', timestamp)
+    console.log('Supabase URL:', supabaseUrl ? 'SET' : 'NOT SET')
+    console.log('Supabase Key:', supabaseKey ? 'SET' : 'NOT SET')
+    
     // Try to fetch real data from Supabase first
     if (supabaseUrl && supabaseKey) {
+      console.log('Fetching from current_weather table...')
       const { data, error } = await supabase
         .from('current_weather')
         .select('*')
         .order('observation_time_utc', { ascending: false })
 
+      console.log('Current weather query result:', { dataLength: data?.length, error })
+
       if (!error && data && data.length > 0) {
-        console.log(`Fetched ${data.length} weather stations from Supabase`)
-        return NextResponse.json(data)
+        console.log(`SUCCESS: Fetched ${data.length} weather stations from current_weather table`)
+        return NextResponse.json(data, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        })
       }
       
       // If no data in current_weather view, try fetching from observations table
+      console.log('Trying weather_observations table...')
       const { data: obsData, error: obsError } = await supabase
         .from('weather_observations')
         .select(`
@@ -35,11 +53,18 @@ export async function GET() {
           )
         `)
         .order('observation_time_utc', { ascending: false })
-        .limit(50)
+
+      console.log('Weather observations query result:', { dataLength: obsData?.length, error: obsError })
 
       if (!obsError && obsData && obsData.length > 0) {
-        console.log(`Fetched ${obsData.length} weather observations from Supabase`)
-        return NextResponse.json(obsData)
+        console.log(`SUCCESS: Fetched ${obsData.length} weather observations from Supabase`)
+        return NextResponse.json(obsData, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        })
       }
     }
 

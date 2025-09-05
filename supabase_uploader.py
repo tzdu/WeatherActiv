@@ -210,11 +210,20 @@ class SupabaseWeatherUploader:
             return []
     
     def _clean_datetime_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Convert datetime objects to ISO strings for JSON serialization"""
+        """Convert datetime objects to ISO strings and fix data types for JSON serialization"""
         cleaned = {}
+        
+        # Fields that should be integers in the database
+        integer_fields = {
+            'wind_direction_degrees', 'cloud_oktas'
+        }
+        
         for key, value in data.items():
             if isinstance(value, datetime):
                 cleaned[key] = value.isoformat()
+            elif key in integer_fields and isinstance(value, (int, float)):
+                # Convert float values to integers for integer fields
+                cleaned[key] = int(value) if value is not None else None
             else:
                 cleaned[key] = value
         return cleaned
